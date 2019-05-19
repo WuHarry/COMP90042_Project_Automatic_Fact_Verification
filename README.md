@@ -45,3 +45,7 @@ The entries under *evidence* denote the sentences in the collection which suppor
 * **Evidence** : Show the evidence location
   * `"Fox_Broadcasting_Company"` : show the page identifier
   * `0` : show the sentence index in that page
+
+* **DataSet**
+  * Can use train.json as training set
+  * Can use devset.json as test set
