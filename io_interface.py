@@ -1,8 +1,6 @@
 import os
 import pickle
 from converter import Converter
-from 
-
 
 class InputData(object):
     def __init__(self, id, claim, label=None, evidence=None):
@@ -27,26 +25,10 @@ class InputDataGenerator(object):
             dataset_file_path = os.path.join(self.dataset_dir, 'dev%s.txt' % sample_amount)
         if os.path.exists(dataset_file_path):
             with open(dataset_file_path, 'rb') as f:
-                df = pickle.load(f)
+                input_data = pickle.load(f)
                 print("Dataset loaded!")
         else:
-            df = self.converter.training_data_converter(sample_amount, is_training)
-
-        input_data = df.apply(lambda x: InputData(id=x['index'],
-                                                  claim=x['claim'],
-                                                  evidence=x['evidence'],
-                                                  label=x['label']), axis=1)   
-        
-        # for data in input_data:
-        #     temp = []
-        #     temp[id] = data.id
-        #     temp[claim] = data.claim
-        #     temp[evidence] = []
-        #     temp[evidence].append((evidence, 1))
-            
-        #     _, fake_evidences = self.converter.search_engine.searchDocs(data.claim)
-        #     true_evidences = [x['evidence'] for x in input_data.loc[input_data['claim'] == data.claim]]
-
+            input_data = self.converter.training_data_converter(sample_amount, is_training)  
 
         return input_data
 

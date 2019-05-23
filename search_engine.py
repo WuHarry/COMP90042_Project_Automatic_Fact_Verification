@@ -94,7 +94,7 @@ class IndexFiles(object):
 
         parser = PythonMultiFieldQueryParser(['name', 'contents'], self.analyzer)
         
-        query = parser.parse(command, ['name', 'contents'], 
+        query = parser.parse(QueryParser.escape(command), ['name', 'contents'], 
                              [BooleanClause.Occur.SHOULD, BooleanClause.Occur.SHOULD], self.analyzer)
         
         scoreDocs = self.searcher.search(query, 30).scoreDocs

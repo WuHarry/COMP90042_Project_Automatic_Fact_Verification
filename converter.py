@@ -5,7 +5,6 @@ import json
 import pickle
 from search_engine import IndexFiles
 
-
 class Converter(object):
 
     def __init__(self, root, storedir, datadir, datasetdir):
@@ -28,24 +27,63 @@ class Converter(object):
                 try:
                     if doc['label'] == 'SUPPORTS':
                         if len(support) < sample_amount:
-                            for evidence in doc['evidence']:
-                                _, content = self._getDoc(evidence)
-                                support.append([index, id, doc['claim'], doc['label'], content.strip()])
+                            _, fake_evidences = self._searchDocs(doc['claim'])
+                            true_evidences = []
+                            for e in doc['evidence']:
+                                _, content = self._getDoc(e)
+                                true_evidences.append(content)
+                            for t_e in true_evidences:
+                                temp = {}
+                                temp['index'] = index                               
+                                temp['id'] = id
+                                temp['claim'] = doc['claim']
+                                temp['label'] = doc['label']
+                                temp['evidence'] = []
+                                temp['evidence'].append((t_e.strip(), 1))
+                                for f_e in fake_evidences:
+                                    if len(temp['evidence']) < 10:
+                                        if f_e not in true_evidences:
+                                            temp['evidence'].append((f_e.strip(), 0))
+                                support.append(temp)
                                 index += 1
                                 if index % 100 == 0:
                                     print('%d examples loaded' % index)
                     elif doc['label'] == 'REFUTES':
                         if len(refute) < sample_amount:
-                            for evidence in doc['evidence']:
-                                _, content = self._getDoc(evidence)
-                                refute.append([index, id, doc['claim'], doc['label'], content.strip()])
+                            _, fake_evidences = self._searchDocs(doc['claim'])
+                            true_evidences = []
+                            for e in doc['evidence']:
+                                _, content = self._getDoc(e)
+                                true_evidences.append(content)
+                            for t_e in true_evidences:
+                                temp = {}
+                                temp['index'] = index
+                                temp['id'] = id
+                                temp['claim'] = doc['claim']
+                                temp['label'] = doc['label']
+                                temp['evidence'] = []
+                                temp['evidence'].append((t_e.strip(), 1))
+                                for f_e in fake_evidences:
+                                    if len(temp['evidence']) < 10:
+                                        if f_e not in true_evidences:
+                                            temp['evidence'].append((f_e.strip(), 0))
+                                refute.append(temp)
                                 index += 1
                                 if index % 100 == 0:
                                     print('%d examples loaded' % index)
                     else:
                         if len(no_info) < sample_amount:
                             _, content = self._searchDocs(doc['claim'])
-                            no_info.append([index, id, doc['claim'], doc['label'], content[0].strip()])
+                            temp = {}
+                            temp['index'] = index
+                            temp['id'] = id
+                            temp['claim'] = doc['claim']
+                            temp['label'] = doc['label']
+                            temp['evidence'] = []
+                            for e in content:
+                                if len(temp['evidence']) < 10:
+                                    temp['evidence'].append((e.strip(), 0))
+                            no_info.append(temp)
                             index += 1
                             if index % 100 == 0:
                                 print('%d examples loaded' % index)
@@ -53,10 +91,10 @@ class Converter(object):
                         print(len(support), len(refute), len(no_info))
                         break
                 except Exception:
+                    print('ERROR::::  exception: ', id, doc)
                     continue
         
         total = support + refute + no_info
-        df = pd.DataFrame(total, columns=['index', 'id', 'claim', 'label', 'evidence']).sample(frac=1).reset_index(drop=True)
         
         if not os.path.exists(self.dataset_dir):
             os.mkdir(self.dataset_dir) 
@@ -68,13 +106,14 @@ class Converter(object):
         
         if not os.path.exists(data_set_path):
             with open(data_set_path, 'wb') as f:
-                pickle.dump(df, f)
+                pickle.dump(total, f)
             print('Data set convertered!')
         else:
             print('Data already convertered!')
         
-        return df
+        return total
 
+    # TO-DO: need to be updated
     def test_data_converter(self):
         test_dir = os.path.join(self.datadir, 'test-unlabelled.json')
         with open(test_dir) as f:
