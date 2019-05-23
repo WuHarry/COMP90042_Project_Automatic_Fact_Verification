@@ -23,6 +23,7 @@ class Converter(object):
             dataset = json.loads(f.read())
             support, refute, no_info = [], [], []
             index = 0
+            print(len(dataset.items()))
             for id, doc in dataset.items():
                 try:
                     if doc['label'] == 'SUPPORTS':
@@ -34,7 +35,7 @@ class Converter(object):
                                 if index % 100 == 0:
                                     print('%d examples loaded' % index)
                     elif doc['label'] == 'REFUTES':
-                        if len(support) < sample_amount:
+                        if len(refute) < sample_amount:
                             for evidence in doc['evidence']:
                                 _, content = self._getDoc(evidence)
                                 refute.append([index, id, doc['claim'], doc['label'], content.strip()])
@@ -42,19 +43,20 @@ class Converter(object):
                                 if index % 100 == 0:
                                     print('%d examples loaded' % index)
                     else:
-                        if len(support) < sample_amount:
+                        if len(no_info) < sample_amount:
                             _, content = self._searchDocs(doc['claim'])
                             no_info.append([index, id, doc['claim'], doc['label'], content[0].strip()])
                             index += 1
                             if index % 100 == 0:
                                 print('%d examples loaded' % index)
                     if len(support) == sample_amount and len(refute) == sample_amount and len(no_info) == sample_amount:
+                        print(len(support), len(refute), len(no_info))
                         break
                 except Exception:
                     continue
         
         total = support + refute + no_info
-        df = pd.DataFrame(total, columns=['index', 'id', 'label', 'claim', 'evidence']).sample(frac=1).reset_index(drop=True)
+        df = pd.DataFrame(total, columns=['index', 'id', 'claim', 'label', 'evidence']).sample(frac=1).reset_index(drop=True)
         
         if not os.path.exists(self.dataset_dir):
             os.mkdir(self.dataset_dir) 
@@ -73,71 +75,32 @@ class Converter(object):
         
         return df
 
-                            
-    def train_dev_loader(self, is_trainset=True, max_sample=float('inf')):
-        if is_trainset:
-            dir = os.path.join(self.datadir, 'train.json')
-        else:
-            dir = os.path.join(self.datadir, 'devset.json')
-
-        with open(dir) as f:
-            data = json.loads(f.read())
-            sup_examples, ref_examples, nei_examples = [], [], []
-            c = 0
-            for i, d in list(data.items()):
-                try:
-                    if d['label'] == 'SUPPORTS':
-                        if len(sup_examples) < max_sample:
-                            for e in d['evidence']:
-                                _, content = self._retrieve(e)
-                                sup_examples.append([c, i, d['claim'], content.strip(), d['label']])
-                                c += 1
-                                if c % 50 == 0:
-                                    print('%d examples loaded' % c)
-                    elif d['label'] == 'REFUTES':
-                        if len(ref_examples) < max_sample:
-                            for e in d['evidence']:
-                                _, content = self._retrieve(e)
-                                ref_examples.append([c, i, d['claim'], content.strip(), d['label']])
-                                c += 1
-                                if c % 50 == 0:
-                                    print('%d examples loaded' % c)
-                    else:
-                        if len(nei_examples) < max_sample:
-                            _, content = self._search(d['claim'])
-                            content = content[0]
-                            nei_examples.append([c, i, d['claim'], content.strip(), d['label']])
-                            c += 1
-                            if c % 50 == 0:
-                                print('%d examples loaded' % c)
-                    if len(sup_examples) == max_sample and len(nei_examples) == max_sample \
-                        and len(ref_examples) == max_sample:
-                        break
-                except Exception:
-                    continue
-        samples = sup_examples + ref_examples + nei_examples
-        
-        df = pd.DataFrame(samples, columns=['index', 'id', 'claim', 'evidence', 'label'])
-
-        return df.sample(frac=1).reset_index(drop=True)
-
-    def test_loader(self):
-        dir = os.path.join(self.datadir, 'test-unlabelled.json')
-        with open(dir) as f:
+    def test_data_converter(self):
+        test_dir = os.path.join(self.datadir, 'test-unlabelled.json')
+        with open(test_dir) as f:
             data = json.loads(f.read())
             examples = []
-            c = 0
-            for i, d in list(data.items())[:5]:
-                claim = d['claim']
-                docnames, contents = self._search(claim)
+            index = 0
+            for id, doc in list(data.items())[:5]:
+                claim = doc['claim']
+                docnames, contents = self._searchDocs(claim)
                 for j in range(len(docnames)):
-                    examples.append([c, i, claim, docnames[j], contents[j].strip()])
-                    c += 1
-        return pd.DataFrame(examples, columns=['index', 'id', 'claim', 'docname', 'evidence'])
+                    examples.append([index, id, claim, docnames[j], contents[j].strip()])
+                    index += 1
+
+        df = pd.DataFrame(examples, columns=['index', 'id', 'claim', 'docname', 'evidence'])
+        if not os.path.exists(self.dataset_dir):
+            os.mkdir(self.dataset_dir) 
+        test_set_path = os.path.join(self.dataset_dir, 'test.txt')
+        if not os.path.exists(test_set_path):
+            with open(test_set_path, 'wb') as f:
+                pickle.dump(df, f)
+
+        return df
 
     def _getDoc(self, e):
         doc, sentense_id = e[0], e[1]
-        return self.search_engine.retrieve(doc, sentense_id)
+        return self.search_engine.getDoc(doc, sentense_id)
 
     def _searchDocs(self, q):
         return self.search_engine.searchDocs(q)

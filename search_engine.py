@@ -97,7 +97,7 @@ class IndexFiles(object):
         query = parser.parse(command, ['name', 'contents'], 
                              [BooleanClause.Occur.SHOULD, BooleanClause.Occur.SHOULD], self.analyzer)
         
-        scoreDocs = self.searcher.search(query, 20).scoreDocs
+        scoreDocs = self.searcher.search(query, 30).scoreDocs
 #         print("%s total matching documents." % len(scoreDocs))
 
         docName = []
