@@ -1,5 +1,5 @@
 # Indexing
-import sys, os, lucene, threading, unicodedata, re, codecs
+import sys, os, lucene, time, threading, unicodedata, re, codecs
 from zipfile import ZipFile
 
 from java.nio.file import Paths
@@ -90,15 +90,15 @@ class IndexFiles(object):
         if command == '':
             return
 
-        print("Searching for:", command)
+#         print("Searching for:", command)
 
         parser = PythonMultiFieldQueryParser(['name', 'contents'], self.analyzer)
         
         query = parser.parse(command, ['name', 'contents'], 
                              [BooleanClause.Occur.SHOULD, BooleanClause.Occur.SHOULD], self.analyzer)
         
-        scoreDocs = self.searcher.search(query, 50).scoreDocs
-        print("%s total matching documents." % len(scoreDocs))
+        scoreDocs = self.searcher.search(query, 20).scoreDocs
+#         print("%s total matching documents." % len(scoreDocs))
 
         docName = []
         docContents = []
@@ -111,3 +111,12 @@ class IndexFiles(object):
 #             print('docname:', doc.get("docname"), 'name:', doc.get("name"), 'content:', doc.get("contents"))
         
         return docName, docContents
+        
+    def getDoc(self, doc, sentenseid):
+
+        query = QueryParser.escape(doc + ' ' + str(sentenseid))
+        query = QueryParser('docname', self.analyzer).parse(query)
+        score = self.searcher.search(query, 1).scoreDocs
+
+        doc = self.searcher.doc(score[0].doc)
+        return doc.get('docname'), doc.get('contents')
