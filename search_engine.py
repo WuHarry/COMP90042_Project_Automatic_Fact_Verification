@@ -85,7 +85,7 @@ class IndexFiles(object):
                     writer.addDocument(doc)
             print('File %d done indexing' % i, file)
         
-    def searchDocs(self, command):
+    def searchDocs(self, command, topK=30):
 
         if command == '':
             return
@@ -97,7 +97,7 @@ class IndexFiles(object):
         query = parser.parse(QueryParser.escape(command), ['name', 'contents'], 
                              [BooleanClause.Occur.SHOULD, BooleanClause.Occur.SHOULD], self.analyzer)
         
-        scoreDocs = self.searcher.search(query, 30).scoreDocs
+        scoreDocs = self.searcher.search(query, topK).scoreDocs
 #         print("%s total matching documents." % len(scoreDocs))
 
         docName = []

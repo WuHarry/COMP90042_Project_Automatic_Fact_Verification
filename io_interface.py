@@ -36,16 +36,12 @@ class InputDataGenerator(object):
         test_set_path = os.path.join(self.dataset_dir, 'test.txt')
         if os.path.exists(test_set_path):
             with open(test_set_path, 'rb') as f:
-                df = pickle.load(f)
+                test_input = pickle.load(f)
                 print("Test Data loaded!")
         else:
-            df = self.converter.test_data_converter()
+            test_input = self.converter.test_data_converter()
 
-        input_examples = df.apply(lambda x: InputExample(id=x['index'],
-                                                         claim=x['claim'],
-                                                         evidence=x['evidence'],
-                                                         label='NOT ENOUGH INFO'), axis=1)
-        return input_examples
+        return test_input
 
 
 

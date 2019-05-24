@@ -22,12 +22,12 @@ class Converter(object):
             dataset = json.loads(f.read())
             support, refute, no_info = [], [], []
             index = 0
-            print(len(dataset.items()))
+            print('%d Total Claims need to convert' % len(dataset.items()))
             for id, doc in dataset.items():
                 try:
                     if doc['label'] == 'SUPPORTS':
                         if len(support) < sample_amount:
-                            _, fake_evidences = self._searchDocs(doc['claim'])
+                            _, fake_evidences = self._searchDocs(doc['claim'], 10+len(doc['evidence']))
                             true_evidences = []
                             for e in doc['evidence']:
                                 _, content = self._getDoc(e)
@@ -41,7 +41,9 @@ class Converter(object):
                                 temp['evidence'] = []
                                 temp['evidence'].append((t_e.strip(), 1))
                                 for f_e in fake_evidences:
-                                    if len(temp['evidence']) < 10:
+                                    if len(temp['evidence']) >= 10:
+                                        break
+                                    else:
                                         if f_e not in true_evidences:
                                             temp['evidence'].append((f_e.strip(), 0))
                                 support.append(temp)
@@ -50,7 +52,7 @@ class Converter(object):
                                     print('%d examples loaded' % index)
                     elif doc['label'] == 'REFUTES':
                         if len(refute) < sample_amount:
-                            _, fake_evidences = self._searchDocs(doc['claim'])
+                            _, fake_evidences = self._searchDocs(doc['claim'], 10+len(doc['evidence']))
                             true_evidences = []
                             for e in doc['evidence']:
                                 _, content = self._getDoc(e)
@@ -64,7 +66,9 @@ class Converter(object):
                                 temp['evidence'] = []
                                 temp['evidence'].append((t_e.strip(), 1))
                                 for f_e in fake_evidences:
-                                    if len(temp['evidence']) < 10:
+                                    if len(temp['evidence']) >= 10:
+                                        break
+                                    else:
                                         if f_e not in true_evidences:
                                             temp['evidence'].append((f_e.strip(), 0))
                                 refute.append(temp)
@@ -73,7 +77,7 @@ class Converter(object):
                                     print('%d examples loaded' % index)
                     else:
                         if len(no_info) < sample_amount:
-                            _, content = self._searchDocs(doc['claim'])
+                            _, content = self._searchDocs(doc['claim'], 10)
                             temp = {}
                             temp['index'] = index
                             temp['id'] = id
@@ -81,7 +85,9 @@ class Converter(object):
                             temp['label'] = doc['label']
                             temp['evidence'] = []
                             for e in content:
-                                if len(temp['evidence']) < 10:
+                                if len(temp['evidence']) >= 10:
+                                    break
+                                else:
                                     temp['evidence'].append((e.strip(), 0))
                             no_info.append(temp)
                             index += 1
@@ -141,6 +147,6 @@ class Converter(object):
         doc, sentense_id = e[0], e[1]
         return self.search_engine.getDoc(doc, sentense_id)
 
-    def _searchDocs(self, q):
-        return self.search_engine.searchDocs(q)
+    def _searchDocs(self, q, topK=30):
+        return self.search_engine.searchDocs(q, topK)
 
