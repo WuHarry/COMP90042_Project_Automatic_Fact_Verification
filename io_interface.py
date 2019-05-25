@@ -32,14 +32,17 @@ class InputDataGenerator(object):
 
         return input_data
 
-    def generateTest(self):
-        test_set_path = os.path.join(self.dataset_dir, 'test.txt')
+    def generateTest(self, isFinal=True):
+        if isFinal:
+            test_set_path = os.path.join(self.dataset_dir, 'test.txt')
+        else:
+            test_set_path = os.path.join(self.dataset_dir, 'dev-test.txt')
         if os.path.exists(test_set_path):
             with open(test_set_path, 'rb') as f:
                 test_input = pickle.load(f)
                 print("Test Data loaded!")
         else:
-            test_input = self.converter.test_data_converter()
+            test_input = self.converter.test_data_converter(isFinal)
 
         return test_input
 

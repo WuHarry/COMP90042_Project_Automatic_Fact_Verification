@@ -119,29 +119,43 @@ class Converter(object):
         
         return total
 
-    # TO-DO: need to be updated
-    def test_data_converter(self):
-        test_dir = os.path.join(self.datadir, 'test-unlabelled.json')
+    def test_data_converter(self, isFinal=True):
+        if isFinal:
+            test_dir = os.path.join(self.datadir, 'test-unlabelled.json')
+        else:
+            test_dir = os.path.join(self.datadir, 'devset.json')
         with open(test_dir) as f:
             data = json.loads(f.read())
-            examples = []
+            tests = []
             index = 0
-            for id, doc in list(data.items())[:5]:
-                claim = doc['claim']
-                docnames, contents = self._searchDocs(claim)
-                for j in range(len(docnames)):
-                    examples.append([index, id, claim, docnames[j], contents[j].strip()])
-                    index += 1
-
-        df = pd.DataFrame(examples, columns=['index', 'id', 'claim', 'docname', 'evidence'])
+            for id, doc in data.items():
+                docnames, contents = self._searchDocs(doc['claim'], 10)
+                temp = {}
+                temp['index'] = index
+                temp['id'] = id
+                temp['claim'] = doc['claim']
+                temp['label'] = 'UNKOWN'
+                temp['evidence'] = []
+                for i in range(len(docnames)):
+                    temp['evidence'].append((contents[i].strip(), docnames[i]))
+                tests.append(temp)
+                index += 1
+                if index % 100 == 0:
+                    print('%d tests loaded' % index) 
         if not os.path.exists(self.dataset_dir):
             os.mkdir(self.dataset_dir) 
-        test_set_path = os.path.join(self.dataset_dir, 'test.txt')
+        if isFinal:
+            test_set_path = os.path.join(self.dataset_dir, 'test.txt')
+        else:
+            test_set_path = os.path.join(self.dataset_dir, 'dev-test.txt')
         if not os.path.exists(test_set_path):
             with open(test_set_path, 'wb') as f:
-                pickle.dump(df, f)
+                pickle.dump(tests, f)
+            print('Data set convertered!')
+        else:
+            print('Data already convertered!')
 
-        return df
+        return tests
 
     def _getDoc(self, e):
         doc, sentense_id = e[0], e[1]
