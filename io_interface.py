@@ -1,5 +1,6 @@
 import os
 import pickle
+import lucene
 from converter import Converter
 
 class InputData(object):
@@ -14,7 +15,8 @@ class InputDataGenerator(object):
         self.wiki_dir = 'wiki-pages-text.zip'
         self.index_dir = './IndexFiles.index'
         self.original_data_dir = './'
-        self.dataset_dir = './datasets'
+        self.dataset_dir = './Data'
+        assert lucene.getVMEnv() or lucene.initVM(vmargs=['-Djava.awt.headless=true'])
         self.converter = Converter(self.wiki_dir, self.index_dir, 
             self.original_data_dir, self.dataset_dir)
     

@@ -6,4 +6,5 @@ wsta-project-rev.pdf
 __pycache__
 IndexFiles.index
 wiki
-datasets
+Data
+output
