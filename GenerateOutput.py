@@ -1,4 +1,5 @@
 import os, json
+import numpy as np
 import io_interface 
 from Mains import predict
 from keras.models import load_model
@@ -31,7 +32,8 @@ class GenerateOutput(object):
             verify_tokenizer.word_index = json.load(f)
 
         outputs = {}
-        for test in tests[:10]:
+        count = 0
+        for test in tests:
             result = {}
             docnames = [e[1] for e in test['evidence']]
             e_contents = [e[0] for e in test['evidence']]
@@ -39,41 +41,53 @@ class GenerateOutput(object):
             claims = [test['claim']] * len(docnames)
             id = test['id']
             result['claim'] = test['claim']
+            count += 1
+            if count % 100 == 0:
+                print('%d Tests proceed' % count)
             # get if there is enough info
-            score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents)
-            print(score_preds)
-            if all(s == 0 for s in score_preds):
+            score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents, False)
+            if all(s[1] < 0.7 for s in score_preds):
                 result['label'] = 'NOT ENOUGH INFO'
                 result['evidence'] = []
                 outputs[id] = result
-                print(result)
-                continue
-            # check it is support or not
-            verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents, False)
-
-            # print(verify_preds)
-
-            # result['label'] = label
-            # result['evidence'] = []
-            # for e in evidences:
-            #     doc_sec = e.split()
-            #     result['evidence'].append([doc_sec[0], doc_sec[1]])
-            # result[id] = result
-            # results.append(result)
+            else:
+                # check it is support or not
+                verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
+                # print(verify_preds)
+                if not all(s == 0  for s in verify_preds):
+                    result['label'] = 'SUPPORTS'
+                    result['evidence'] = []
+                    evidences = list(np.where(verify_preds == 1)[0])
+                    # print(evidences)
+                    for i in evidences:
+                        doc_sec = docnames[i].split()
+                        if len(doc_sec) == 1:
+                            continue
+                        result['evidence'].append([doc_sec[0], int(doc_sec[1])])
+                    outputs[id] = result
+                else:
+                    result['label'] = 'REFUTES'
+                    result['evidence'] = []
+                    evidences = list(np.where(verify_preds == 0)[0])
+                    # print(evidences)
+                    for i in evidences:
+                        doc_sec = docnames[i].split()
+                        if len(doc_sec) == 1:
+                            continue
+                        result['evidence'].append([doc_sec[0], int(doc_sec[1])])
+                    outputs[id] = result
         
         
         if not os.path.exists(self.output_path):
             os.mkdir(self.output_path) 
 
         if isFinal:
-            output_result_path = os.path.join(self.output_path, 'test.json')
+            output_result_path = os.path.join(self.output_path, 'testoutput.json')
         else:
             output_result_path = os.path.join(self.output_path, 'dev-test.json')
         
         with open(output_result_path, 'w') as outfile:
             json.dump(outputs, outfile, indent=2)
-        
-
 
 if __name__ == '__main__':
     output = GenerateOutput()
