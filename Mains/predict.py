@@ -13,8 +13,8 @@ from keras.callbacks import EarlyStopping
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
-from Utils.preprocessing import *
-from Models.EvidenceScoring import *
+from COMP90042_Project_Automatic_Fact_Verification.Utils.preprocessing import *
+from COMP90042_Project_Automatic_Fact_Verification.Models.EvidenceScoring import *
 import json
 from keras.models import load_model
 

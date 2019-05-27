@@ -1,13 +1,13 @@
 import os, json
 import numpy as np
 import io_interface 
-from Mains import predict
+from COMP90042_Project_Automatic_Fact_Verification.Mains import predict
 from keras.models import load_model
 from keras.preprocessing.text import Tokenizer
-from Utils.preprocessing import *
-from Models.EvidenceScoring import *
+from COMP90042_Project_Automatic_Fact_Verification.Utils.preprocessing import *
+from COMP90042_Project_Automatic_Fact_Verification.Models.EvidenceScoring import *
 
-THRESHOLD_REVELANT = 0.7
+THRESHOLD_REVELANT = 0.8
 class GenerateOutput(object):
 
     def __init__(self):
@@ -72,20 +72,23 @@ class GenerateOutput(object):
                     del e_contents[i]
                 # check it is support or not
                 # for 0/1 mode
-                # verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
+                verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
                 # for probability mode
-                verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents, False)
+                # verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents, False)
                 # print(verify_preds)
-                if not all(s[1] < THRESHOLD_REVELANT for s in verify_preds):
+                # for 0/1 mode
+                if not all(s == 0 for s in verify_preds):
+                # for probability mode
+                # if not all(s[1] < THRESHOLD_REVELANT for s in verify_preds):
                     result['label'] = 'SUPPORTS'
                     result['evidence'] = []
                     # for 0/1 mode
-                    # evidences = list(np.where(verify_preds == 1)[0])
+                    evidences = list(np.where(verify_preds == 1)[0])
                     # for probability mode
-                    evidences = []
-                    for i in range(len(verify_preds)):
-                        if verify_preds[i][1] >= THRESHOLD_REVELANT:
-                            evidences.append(i)
+                    # evidences = []
+                    # for i in range(len(verify_preds)):
+                    #     if verify_preds[i][1] >= THRESHOLD_REVELANT:
+                    #         evidences.append(i)
                     # print(evidences)
                     for i in evidences:
                         doc_sec = docnames[i].split()
@@ -97,12 +100,12 @@ class GenerateOutput(object):
                     result['label'] = 'REFUTES'
                     result['evidence'] = []
                     # for 0/1 mode
-                    # evidences = list(np.where(verify_preds == 0)[0])
+                    evidences = list(np.where(verify_preds == 0)[0])
                     # for probability mode
-                    evidences = []
-                    for i in range(len(verify_preds)):
-                        if verify_preds[i][1] < THRESHOLD_REVELANT:
-                            evidences.append(i)
+                    # evidences = []
+                    # for i in range(len(verify_preds)):
+                    #     if verify_preds[i][1] < THRESHOLD_REVELANT:
+                    #         evidences.append(i)
                     # print(evidences)
                     for i in evidences:
                         doc_sec = docnames[i].split()

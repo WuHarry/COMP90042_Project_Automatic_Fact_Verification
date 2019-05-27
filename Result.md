@@ -175,3 +175,21 @@ Support Sentence F1 		28.55%
 Refute Sentence Precision 	22.87%
 Refute Sentence Recall 		34.04%
 Refute Sentence F1 		27.36%
+
+* First 0.7 Second 0.7
+Label Accuracy 		49.83%
+Sentence Precision 	24.32%
+Sentence Recall 	31.31%
+Sentence F1 		27.37%
+Document Precision 	44.35%
+Document Recall 	48.51%
+Document F1 		46.34%
+Support Label Accuracy 	62.75%
+Refute Label Accuracy 	50.33%
+NotInfo Label Accuracy 	36.41%
+Support Sentence Precision 	24.31%
+Support Sentence Recall 	32.62%
+Support Sentence F1 		27.86%
+Refute Sentence Precision 	24.33%
+Refute Sentence Recall 		30.00%
+Refute Sentence F1 		26.87%
