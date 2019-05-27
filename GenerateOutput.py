@@ -46,11 +46,13 @@ class GenerateOutput(object):
             if count % 100 == 0:
                 print('%d Tests proceed' % count)
             # get if there is enough info
-            # 0/1 mode is True
+            # 0/1 mode
             score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents)
+            # probability mode
+            # score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents, False)
             # for 0/1 mode
             if all(s == 0 for s in score_preds):
-            # for probability mode
+            # next line for probability mode
             # if all(s[1] < THRESHOLD_REVELANT for s in score_preds):
                 result['label'] = 'NOT ENOUGH INFO'
                 result['evidence'] = []
@@ -69,12 +71,21 @@ class GenerateOutput(object):
                     del claims[i]
                     del e_contents[i]
                 # check it is support or not
-                verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
+                # for 0/1 mode
+                # verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
+                # for probability mode
+                verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents, False)
                 # print(verify_preds)
-                if not all(s == 0  for s in verify_preds):
+                if not all(s[1] < THRESHOLD_REVELANT for s in verify_preds):
                     result['label'] = 'SUPPORTS'
                     result['evidence'] = []
-                    evidences = list(np.where(verify_preds == 1)[0])
+                    # for 0/1 mode
+                    # evidences = list(np.where(verify_preds == 1)[0])
+                    # for probability mode
+                    evidences = []
+                    for i in range(len(verify_preds)):
+                        if verify_preds[i][1] >= THRESHOLD_REVELANT:
+                            evidences.append(i)
                     # print(evidences)
                     for i in evidences:
                         doc_sec = docnames[i].split()
@@ -85,7 +96,13 @@ class GenerateOutput(object):
                 else:
                     result['label'] = 'REFUTES'
                     result['evidence'] = []
-                    evidences = list(np.where(verify_preds == 0)[0])
+                    # for 0/1 mode
+                    # evidences = list(np.where(verify_preds == 0)[0])
+                    # for probability mode
+                    evidences = []
+                    for i in range(len(verify_preds)):
+                        if verify_preds[i][1] < THRESHOLD_REVELANT:
+                            evidences.append(i)
                     # print(evidences)
                     for i in evidences:
                         doc_sec = docnames[i].split()
@@ -93,8 +110,6 @@ class GenerateOutput(object):
                             continue
                         result['evidence'].append([doc_sec[0], int(doc_sec[1])])
                     outputs[id] = result
-        
-        # print('this is %f' % THRESHOLD_REVELANT)
 
         if not os.path.exists(self.output_path):
             os.mkdir(self.output_path) 
@@ -103,10 +118,12 @@ class GenerateOutput(object):
             output_result_path = os.path.join(self.output_path, 'testoutput.json')
         else:
             output_result_path = os.path.join(self.output_path, 'dev-test%s.json' % THRESHOLD_REVELANT)
+            
+        print(output_result_path)
         
         with open(output_result_path, 'w') as outfile:
             json.dump(outputs, outfile, indent=2)
 
 if __name__ == '__main__':
     output = GenerateOutput()
-    output.generateOutput(True)
+    output.generateOutput(False)

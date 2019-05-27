@@ -95,3 +95,16 @@ Document F1 		50.88%
 Support Label Accuracy 	60.05%
 Refute Label Accuracy 	40.43%
 NotInfo Label Accuracy 	46.91%
+
+* First <0.5 Second 0/1 Remove irrelevant evidence that input to second model
+Label Accuracy 		49.51%
+Sentence Precision 	34.19%
+Sentence Recall 	32.81%
+Sentence F1 		33.48%
+Document Precision 	56.55%
+Document Recall 	48.16%
+Document F1 		52.02%
+Support Label Accuracy 	62.69%
+Refute Label Accuracy 	41.99%
+NotInfo Label Accuracy 	43.85%
+
