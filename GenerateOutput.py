@@ -7,6 +7,7 @@ from keras.preprocessing.text import Tokenizer
 from Utils.preprocessing import *
 from Models.EvidenceScoring import *
 
+THRESHOLD_REVELANT = 0.6
 class GenerateOutput(object):
 
     def __init__(self):
@@ -37,7 +38,7 @@ class GenerateOutput(object):
             result = {}
             docnames = [e[1] for e in test['evidence']]
             e_contents = [e[0] for e in test['evidence']]
-            print(test['claim'])
+            # print(test['claim'])
             claims = [test['claim']] * len(docnames)
             id = test['id']
             result['claim'] = test['claim']
@@ -45,12 +46,28 @@ class GenerateOutput(object):
             if count % 100 == 0:
                 print('%d Tests proceed' % count)
             # get if there is enough info
-            score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents, False)
-            if all(s[1] < 0.7 for s in score_preds):
+            # 0/1 mode is True
+            score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents)
+            # for 0/1 mode
+            if all(s == 0 for s in score_preds):
+            # for probability mode
+            # if all(s[1] < THRESHOLD_REVELANT for s in score_preds):
                 result['label'] = 'NOT ENOUGH INFO'
                 result['evidence'] = []
                 outputs[id] = result
             else:
+                # for 0/1 mode
+                irrelevant = list(np.where(score_preds == 0)[0])
+                # for probability mode
+                # irrelevant = []
+                # for i in range(len(score_preds)):
+                #     if score_preds[i][1] < THRESHOLD_REVELANT:
+                #         irrelevant.append(i)
+                # remove all irrelevant
+                for i in sorted(irrelevant, reverse=True):
+                    del docnames[i]
+                    del claims[i]
+                    del e_contents[i]
                 # check it is support or not
                 verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
                 # print(verify_preds)
@@ -77,18 +94,19 @@ class GenerateOutput(object):
                         result['evidence'].append([doc_sec[0], int(doc_sec[1])])
                     outputs[id] = result
         
-        
+        # print('this is %f' % THRESHOLD_REVELANT)
+
         if not os.path.exists(self.output_path):
             os.mkdir(self.output_path) 
 
         if isFinal:
             output_result_path = os.path.join(self.output_path, 'testoutput.json')
         else:
-            output_result_path = os.path.join(self.output_path, 'dev-test.json')
+            output_result_path = os.path.join(self.output_path, 'dev-test%s.json' % THRESHOLD_REVELANT)
         
         with open(output_result_path, 'w') as outfile:
             json.dump(outputs, outfile, indent=2)
 
 if __name__ == '__main__':
     output = GenerateOutput()
-    output.generateOutput(False)
+    output.generateOutput(True)
