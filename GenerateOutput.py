@@ -1,13 +1,13 @@
 import os, json
 import numpy as np
 import io_interface 
-from COMP90042_Project_Automatic_Fact_Verification.Mains import predict
+from Mains import predict
 from keras.models import load_model
 from keras.preprocessing.text import Tokenizer
-from COMP90042_Project_Automatic_Fact_Verification.Utils.preprocessing import *
-from COMP90042_Project_Automatic_Fact_Verification.Models.EvidenceScoring import *
+from Utils.preprocessing import *
+from Models.EvidenceScoring import *
 
-THRESHOLD_REVELANT = 0.8
+THRESHOLD_REVELANT = 0.9
 class GenerateOutput(object):
 
     def __init__(self):
