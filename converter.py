@@ -129,7 +129,7 @@ class Converter(object):
             tests = []
             index = 0
             for id, doc in data.items():
-                docnames, contents = self._searchDocs(doc['claim'], 10)
+                docnames, contents = self._searchDocs(doc['claim'], 20)
                 temp = {}
                 temp['index'] = index
                 temp['id'] = id

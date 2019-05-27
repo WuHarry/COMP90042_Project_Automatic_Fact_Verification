@@ -108,3 +108,70 @@ Support Label Accuracy 	62.69%
 Refute Label Accuracy 	41.99%
 NotInfo Label Accuracy 	43.85%
 
+* First 0/1 Second 0.7 Remove irrelevant evidence that input to second model
+Label Accuracy 		49.53%
+Sentence Precision 	34.20%
+Sentence Recall 	32.76%
+Sentence F1 		33.46%
+Document Precision 	56.68%
+Document Recall 	48.26%
+Document F1 		52.13%
+Support Label Accuracy 	57.11%
+Refute Label Accuracy 	47.63%
+NotInfo Label Accuracy 	43.85%
+
+
+****** Top20 
+* First 0/1 Second 0.6
+Label Accuracy 		50.33%
+Sentence Precision 	23.22%
+Sentence Recall 	35.69%
+Sentence F1 		28.14%
+Document Precision 	42.20%
+Document Recall 	53.42%
+Document F1 		47.15%
+Support Label Accuracy 	71.27%
+Refute Label Accuracy 	50.39%
+NotInfo Label Accuracy 	29.33%
+Support Sentence Precision 	23.58%
+Support Sentence Recall 	37.64%
+Support Sentence F1 		29.00%
+Refute Sentence Precision 	22.85%
+Refute Sentence Recall 		33.74%
+Refute Sentence F1 		27.25%
+
+* First 0/1 Second 0.7
+Label Accuracy 		50.39%
+Sentence Precision 	23.39%
+Sentence Recall 	35.61%
+Sentence F1 		28.24%
+Document Precision 	42.34%
+Document Recall 	53.54%
+Document F1 		47.29%
+Support Label Accuracy 	68.09%
+Refute Label Accuracy 	53.75%
+NotInfo Label Accuracy 	29.33%
+Support Sentence Precision 	23.77%
+Support Sentence Recall 	37.60%
+Support Sentence F1 		29.13%
+Refute Sentence Precision 	23.00%
+Refute Sentence Recall 		33.63%
+Refute Sentence F1 		27.31%
+
+* First 0/1 Second 0.9
+Label Accuracy 		50.35%
+Sentence Precision 	23.07%
+Sentence Recall 	35.50%
+Sentence F1 		27.96%
+Document Precision 	42.45%
+Document Recall 	53.72%
+Document F1 		47.42%
+Support Label Accuracy 	59.09%
+Refute Label Accuracy 	62.63%
+NotInfo Label Accuracy 	29.33%
+Support Sentence Precision 	23.26%
+Support Sentence Recall 	36.95%
+Support Sentence F1 		28.55%
+Refute Sentence Precision 	22.87%
+Refute Sentence Recall 		34.04%
+Refute Sentence F1 		27.36%

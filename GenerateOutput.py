@@ -7,7 +7,7 @@ from keras.preprocessing.text import Tokenizer
 from Utils.preprocessing import *
 from Models.EvidenceScoring import *
 
-THRESHOLD_REVELANT = 0.6
+THRESHOLD_REVELANT = 0.7
 class GenerateOutput(object):
 
     def __init__(self):
@@ -47,24 +47,24 @@ class GenerateOutput(object):
                 print('%d Tests proceed' % count)
             # get if there is enough info
             # 0/1 mode
-            score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents)
+            # score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents)
             # probability mode
-            # score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents, False)
+            score_preds = predict.general_predict(score_model, score_tokenizer, claims, e_contents, False)
             # for 0/1 mode
-            if all(s == 0 for s in score_preds):
+            # if all(s == 0 for s in score_preds):
             # next line for probability mode
-            # if all(s[1] < THRESHOLD_REVELANT for s in score_preds):
+            if all(s[1] < THRESHOLD_REVELANT for s in score_preds):
                 result['label'] = 'NOT ENOUGH INFO'
                 result['evidence'] = []
                 outputs[id] = result
             else:
                 # for 0/1 mode
-                irrelevant = list(np.where(score_preds == 0)[0])
+                # irrelevant = list(np.where(score_preds == 0)[0])
                 # for probability mode
-                # irrelevant = []
-                # for i in range(len(score_preds)):
-                #     if score_preds[i][1] < THRESHOLD_REVELANT:
-                #         irrelevant.append(i)
+                irrelevant = []
+                for i in range(len(score_preds)):
+                    if score_preds[i][1] < THRESHOLD_REVELANT:
+                        irrelevant.append(i)
                 # remove all irrelevant
                 for i in sorted(irrelevant, reverse=True):
                     del docnames[i]
