@@ -7,7 +7,8 @@ from keras.preprocessing.text import Tokenizer
 from Utils.preprocessing import *
 from Models.EvidenceScoring import *
 
-THRESHOLD_REVELANT = 0.9
+FIRST_THRESHOLD_REVELANT = 0.3
+SECOND_THRESHOLD_REVELANT = 0.6
 class GenerateOutput(object):
 
     def __init__(self):
@@ -16,6 +17,8 @@ class GenerateOutput(object):
         self.score_word_index='./Data/score_word_index.json'
         self.verify_model_path='./Data/verifying_model.h5'
         self.verify_word_index='./Data/verify_word_index.json'
+        self.tri_model_path='./Data/tri_model.h5'
+        self.tri_word_index='./Data/tri_word_index.json'
         self.input_generator = io_interface.InputDataGenerator()
 
     def generateOutput(self, isFinal=True):
@@ -53,7 +56,7 @@ class GenerateOutput(object):
             # for 0/1 mode
             # if all(s == 0 for s in score_preds):
             # next line for probability mode
-            if all(s[1] < THRESHOLD_REVELANT for s in score_preds):
+            if all(s[1] < FIRST_THRESHOLD_REVELANT for s in score_preds):
                 result['label'] = 'NOT ENOUGH INFO'
                 result['evidence'] = []
                 outputs[id] = result
@@ -63,7 +66,7 @@ class GenerateOutput(object):
                 # for probability mode
                 irrelevant = []
                 for i in range(len(score_preds)):
-                    if score_preds[i][1] < THRESHOLD_REVELANT:
+                    if score_preds[i][1] < FIRST_THRESHOLD_REVELANT:
                         irrelevant.append(i)
                 # remove all irrelevant
                 for i in sorted(irrelevant, reverse=True):
@@ -72,23 +75,23 @@ class GenerateOutput(object):
                     del e_contents[i]
                 # check it is support or not
                 # for 0/1 mode
-                verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
+                # verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents)
                 # for probability mode
-                # verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents, False)
+                verify_preds = predict.general_predict(verify_model, verify_tokenizer, claims, e_contents, False)
                 # print(verify_preds)
                 # for 0/1 mode
-                if not all(s == 0 for s in verify_preds):
+                # if not all(s == 0 for s in verify_preds):
                 # for probability mode
-                # if not all(s[1] < THRESHOLD_REVELANT for s in verify_preds):
+                if not all(s[1] < SECOND_THRESHOLD_REVELANT for s in verify_preds):
                     result['label'] = 'SUPPORTS'
                     result['evidence'] = []
                     # for 0/1 mode
-                    evidences = list(np.where(verify_preds == 1)[0])
+                    # evidences = list(np.where(verify_preds == 1)[0])
                     # for probability mode
-                    # evidences = []
-                    # for i in range(len(verify_preds)):
-                    #     if verify_preds[i][1] >= THRESHOLD_REVELANT:
-                    #         evidences.append(i)
+                    evidences = []
+                    for i in range(len(verify_preds)):
+                        if verify_preds[i][1] >= SECOND_THRESHOLD_REVELANT:
+                            evidences.append(i)
                     # print(evidences)
                     for i in evidences:
                         doc_sec = docnames[i].split()
@@ -100,12 +103,12 @@ class GenerateOutput(object):
                     result['label'] = 'REFUTES'
                     result['evidence'] = []
                     # for 0/1 mode
-                    evidences = list(np.where(verify_preds == 0)[0])
+                    # evidences = list(np.where(verify_preds == 0)[0])
                     # for probability mode
-                    # evidences = []
-                    # for i in range(len(verify_preds)):
-                    #     if verify_preds[i][1] < THRESHOLD_REVELANT:
-                    #         evidences.append(i)
+                    evidences = []
+                    for i in range(len(verify_preds)):
+                        if verify_preds[i][1] < SECOND_THRESHOLD_REVELANT:
+                            evidences.append(i)
                     # print(evidences)
                     for i in evidences:
                         doc_sec = docnames[i].split()
@@ -120,13 +123,78 @@ class GenerateOutput(object):
         if isFinal:
             output_result_path = os.path.join(self.output_path, 'testoutput.json')
         else:
-            output_result_path = os.path.join(self.output_path, 'dev-test%s.json' % THRESHOLD_REVELANT)
+            output_result_path = os.path.join(self.output_path, 'dev-test%s.json' % FIRST_THRESHOLD_REVELANT)
             
         print(output_result_path)
         
         with open(output_result_path, 'w') as outfile:
             json.dump(outputs, outfile, indent=2)
 
+    def tri_generateOutput(self, isFinal=True):
+        tests = self.input_generator.generateTest(isFinal)
+
+        tri_model = load_model(self.tri_model_path)
+
+        tri_tokenizer = Tokenizer()
+        with open(self.tri_word_index) as f:
+            tri_tokenizer.word_index = json.load(f)
+
+        outputs = {}
+        count = 0
+        for test in tests:
+            result = {}
+            docnames = [e[1] for e in test['evidence']]
+            e_contents = [e[0] for e in test['evidence']]
+            # print(test['claim'])
+            claims = [test['claim']] * len(docnames)
+            id = test['id']
+            result['claim'] = test['claim']
+            count += 1
+            if count % 100 == 0:
+                print('%d Tests proceed' % count)
+            # get if there is enough info
+            verify_preds = predict.tri_general_predict(tri_model, tri_tokenizer, claims, e_contents)
+            # print(verify_preds)
+            if all(s == 1 for s in verify_preds):
+                result['label'] = 'NOT ENOUGH INFO'
+                result['evidence'] = []
+                outputs[id] = result
+            elif 2 in verify_preds:
+                result['label'] = 'SUPPORTS'
+                result['evidence'] = []
+                for i in range(len(verify_preds)):
+                    if verify_preds[i] == 2:
+                        doc_sec = docnames[i].split()
+                        if len(doc_sec) == 1:
+                            continue
+                        result['evidence'].append([doc_sec[0], int(doc_sec[1])])
+                outputs[id] = result
+            elif 0 in verify_preds:
+                result['label'] = 'REFUTES'
+                result['evidence'] = []
+                for i in range(len(verify_preds)):
+                    if verify_preds[i] == 0:
+                        doc_sec = docnames[i].split()
+                        if len(doc_sec) == 1:
+                            continue
+                        result['evidence'].append([doc_sec[0], int(doc_sec[1])])
+                outputs[id] = result
+
+        if not os.path.exists(self.output_path):
+            os.mkdir(self.output_path) 
+
+        if isFinal:
+            output_result_path = os.path.join(self.output_path, 'tri_testoutput.json')
+        else:
+            output_result_path = os.path.join(self.output_path, 'tri_dev-test.json')
+            
+        print(output_result_path)
+        
+        with open(output_result_path, 'w') as outfile:
+            json.dump(outputs, outfile, indent=2)
+
+
 if __name__ == '__main__':
     output = GenerateOutput()
+    # output.tri_generateOutput(False)
     output.generateOutput(False)

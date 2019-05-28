@@ -46,6 +46,21 @@ def general_predict(model, tokenizer, claim, evidence, getArgmax=True):
         return preds
     return preds
 
+
+def tri_general_predict(model, tokenizer, claim, evidence, getArgmax=True):
+
+    claim_seq = min_index_replace(tokenizer.texts_to_sequences(claim))
+    evidence_seq = min_index_replace(tokenizer.texts_to_sequences(evidence))
+    claim_input = pad_data(claim_seq, maxlen=100)
+    evidence_input = pad_data(evidence_seq, maxlen=100)
+
+    preds = model.predict([claim_input, evidence_input])
+    if getArgmax:
+        preds = np.argmax(preds, axis=1)
+    else:
+        return preds
+    return preds
+
 # if __name__ == '__main__':
 
 #     _, score_model_path, score_word_index, verify_model_path, verify_word_index = argv
