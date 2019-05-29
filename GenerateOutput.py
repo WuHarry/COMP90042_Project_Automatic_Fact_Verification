@@ -155,15 +155,15 @@ class GenerateOutput(object):
             # get if there is enough info
             verify_preds = predict.tri_general_predict(tri_model, tri_tokenizer, claims, e_contents)
             # print(verify_preds)
-            if all(s == 1 for s in verify_preds):
+            if all(s == 2 for s in verify_preds):
                 result['label'] = 'NOT ENOUGH INFO'
                 result['evidence'] = []
                 outputs[id] = result
-            elif 2 in verify_preds:
+            elif 1 in verify_preds:
                 result['label'] = 'SUPPORTS'
                 result['evidence'] = []
                 for i in range(len(verify_preds)):
-                    if verify_preds[i] == 2:
+                    if verify_preds[i] == 1:
                         doc_sec = docnames[i].split()
                         if len(doc_sec) == 1:
                             continue
@@ -196,5 +196,5 @@ class GenerateOutput(object):
 
 if __name__ == '__main__':
     output = GenerateOutput()
-    # output.tri_generateOutput(False)
-    output.generateOutput(False)
+    output.tri_generateOutput(False)
+    # output.generateOutput(False)
